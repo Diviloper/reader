@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+typedef CallbackFunction = void Function(String line, [List<dynamic> parsed]);
+
 /// Class that allows the easy read of single strings, ints and doubles
 /// from stdin
 class Reader {
   final Stdin _source;
+  final List<CallbackFunction> listeners = [];
 
   /// Creates a new Reader of the given stdin. Usually, [Reader.stdin] is the
   /// constructor to use
@@ -12,6 +15,39 @@ class Reader {
 
   /// Creates a new Reader that wraps the system [stdin]
   Reader.stdin() : this(stdin);
+
+  /// Creates a singleton version of the reader that will automatically parse
+  /// the incoming data on new line.
+  Reader._streamConstructor(this._source) {
+    _readLine().listen(_processLine);
+  }
+  static final Reader _stream = Reader._streamConstructor(stdin);
+  static Reader get stream => _stream;
+
+  Stream<String> _readLine() =>
+      _source.transform(systemEncoding.decoder).transform(const LineSplitter());
+
+  void _processLine(String data) {
+    var params = data.split(' ');
+    var parsed = [];
+
+    params.forEach((element) {
+      var a = int.tryParse(element) ?? double.tryParse(element) ?? element;
+      parsed.add(a);
+    });
+
+    listeners.forEach((f) {
+      f(data, parsed);
+    });
+  }
+
+  void addListener(f) {
+    listeners.add(f);
+  }
+
+  void removeListener(f) {
+    listeners.remove(f);
+  }
 
   /// Reads the next [String] in the source until the next whitespace, tab
   /// or end of line. Preceding whitespaces and tabs are ignored
