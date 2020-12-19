@@ -19,7 +19,7 @@ class CaresAboutStdin {
   }
 
   void turtleBack(String raw, [List<dynamic> args = const []]) {
-    if (args.length > 1 && args[0] == 'back' && args[1] is int) {
+    if (args.length > 1 && args[0] == 'backward' && args[1] is int) {
       print('Turtle moving backward ${args[1]}');
     }
   }
